@@ -25,7 +25,6 @@
     "scripts": {
         "test": "phpunit tests",
         "lint": "pint",
-        "stan": "phpstan analyse src tests -l max",
         "solve": "Smudger\\AdventOfCode2022\\Solver::solve"
     },
     "require": {
