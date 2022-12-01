@@ -13,6 +13,11 @@ class Solver
         $class = "Smudger\\AdventOfCode2022\\Day$day\\Puzzle$puzzle";
         $instance = new $class();
 
+        $startTime = microtime(true);
         echo is_callable($instance) ? $instance('input.txt') : 'Instantiated class is not callable.';
+        $endTime = microtime(true);
+
+        $elapsed = round($endTime-$startTime, 4);
+        echo "\nCompleted in $elapsed seconds.\n";
     }
 }
