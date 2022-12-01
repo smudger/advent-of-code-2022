@@ -1,0 +1,17 @@
+{
+    "name": "smudger/advent-of-code-2022",
+    "description": "https://adventofcode.com/",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Smudger\\AdventOfCode2022\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "smudger",
+            "email": "15144861+smudger@users.noreply.github.com"
+        }
+    ],
+    "require": {}
+}
