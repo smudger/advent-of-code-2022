@@ -18,8 +18,7 @@ class Puzzle2
             ->map(fn (array $pair) => array_map(fn (string $letter) => $this->toInt($letter), $pair))
             ->map(fn (array $pair) => [$pair[1] + $pair[0], $this->score($pair[1])])
             ->map(fn (array $pair) => [$pair[0] % 3 === 0 ? 3 : $pair[0] % 3, $pair[1]])
-            ->map(fn (array $pair) => $pair[0] + $pair[1])
-            ->sum();
+            ->reduce(fn (int $carry, array $pair) => $carry + $pair[0] + $pair[1], 0);
     }
 
     private function toInt(string $letter): int
@@ -31,12 +30,8 @@ class Puzzle2
         };
     }
 
-    private function score(int $mod): int
+    private function score(int $move): int
     {
-        return match ($mod) {
-            3 => 3,
-            1 => 6,
-            2 => 0,
-        };
+        return ((3 * $move) + 3) % 9;
     }
 }
