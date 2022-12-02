@@ -12,15 +12,9 @@ class Puzzle2
         $input = file_get_contents(__DIR__.'/'.$fileName)
             ?: throw new Exception('Failed to read input file.');
 
-        return (new Collection(explode("\n", $input)))
-            ->reduce(function (Collection $carry, string $element) {
-                return $carry->tap(function (Collection $carry) use ($element) {
-                    $element !== ''
-                        ? $carry->last()->push($element)
-                        : $carry->push(new Collection());
-                });
-            }, new Collection([new Collection()]))
-            ->filter->isNotEmpty()
+        return (new Collection(explode("\n\n", $input)))
+            ->map(fn (string $group) => new Collection(explode("\n", $group)))
+            ->map(fn (Collection $group) => $group->filter())
             ->map->sum()
             ->sortDesc()
             ->take(3)
