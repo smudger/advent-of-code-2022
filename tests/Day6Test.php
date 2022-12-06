@@ -33,7 +33,7 @@ class Day6Test extends TestCase
      * @test
      * @dataProvider getPuzzle2Examples()
      */
-    public function it_returns_the_correct_answer_for_puzzle_2_example_1($example, $answer): void
+    public function it_returns_the_correct_answer_for_puzzle_2($example, $answer): void
     {
         Assert::assertEquals($answer, (new Puzzle2())($example));
     }
