@@ -22,6 +22,7 @@ class Day7Test extends TestCase
     {
         return [
             ['example1.txt', 95437],
+            ['input.txt', 1642503],
         ];
     }
 
@@ -38,6 +39,7 @@ class Day7Test extends TestCase
     {
         return [
             ['example1.txt', 24933642],
+            ['input.txt', 6999588],
         ];
     }
 }
