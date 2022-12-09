@@ -41,22 +41,6 @@ class Position
             return;
         }
 
-        if ($this->x === $other->x) {
-            $this->y += $other->y > $this->y
-                ? 1
-                : -1;
-
-            return;
-        }
-
-        if ($this->y === $other->y) {
-            $this->x += $other->x > $this->x
-                ? 1
-                : -1;
-
-            return;
-        }
-
         $difference = $other->minus($this);
         $this->x += ($difference->x > 0) - ($difference->x < 0);
         $this->y += ($difference->y > 0) - ($difference->y < 0);
