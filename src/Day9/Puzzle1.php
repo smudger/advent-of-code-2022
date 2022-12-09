@@ -19,21 +19,19 @@ class Puzzle1
             })
             ->all();
 
-        $visitedCells = [];
         $headPosition = new Position(0, 0);
         $tailPosition = new Position(0, 0);
 
-        foreach ($moves as $move) {
-            $headPosition->move($move);
-            $tailPosition->reconcileWith($headPosition);
+        return (new Collection($moves))
+            ->reduce(function (Collection $carry, string $move) use ($headPosition, $tailPosition) {
+                $headPosition->move($move);
+                $tailPosition->reconcileWith($headPosition);
 
-            $hasVisitedBefore = count(array_filter($visitedCells, fn (Position $position) => $tailPosition->equals($position))) !== 0;
+                $carry->push($tailPosition->clone());
 
-            if (! $hasVisitedBefore) {
-                $visitedCells[] = $tailPosition->clone();
-            }
-        }
-
-        return count($visitedCells);
+                return $carry;
+            }, new Collection([]))
+            ->unique(fn (Position $position) => $position->__toString())
+            ->count();
     }
 }
