@@ -14,6 +14,12 @@ composer install
 composer solve <day> <puzzle>
 ```
 
+## Running all solutions
+
+```
+composer solve all
+```
+
 ## Generating the next day
 
 ```
