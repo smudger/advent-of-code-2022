@@ -19,26 +19,24 @@ class Puzzle2
             })
             ->all();
 
-        $visitedCells = [];
         $knots = array_map(fn () => new Position(0, 0), range(0, 9));
 
-        foreach ($moves as $move) {
-            $knots[0]->move($move);
-            foreach ($knots as $i => $knot) {
-                if ($i === 0) {
-                    continue;
+        return (new Collection($moves))
+            ->reduce(function (Collection $carry, string $move) use ($knots) {
+                $knots[0]->move($move);
+                foreach ($knots as $i => $knot) {
+                    if ($i === 0) {
+                        continue;
+                    }
+
+                    $knot->reconcileWith($knots[$i - 1]);
                 }
 
-                $knot->reconcileWith($knots[$i - 1]);
-            }
+                $carry->push(end($knots)->clone());
 
-            $hasVisitedBefore = count(array_filter($visitedCells, fn (Position $position) => end($knots)->equals($position))) !== 0;
-
-            if (! $hasVisitedBefore) {
-                $visitedCells[] = end($knots)->clone();
-            }
-        }
-
-        return count($visitedCells);
+                return $carry;
+            }, new Collection([]))
+            ->unique(fn (Position $position) => $position->__toString())
+            ->count();
     }
 }
