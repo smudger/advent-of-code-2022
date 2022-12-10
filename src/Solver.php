@@ -26,6 +26,7 @@ class Solver
         (new Collection(scandir(__DIR__)))
             ->filter(fn (string $dir) => str_starts_with($dir, 'Day'))
             ->map(fn (string $dir) => substr($dir, 3))
+            ->sort(SORT_NUMERIC)
             ->each(function (string $day) {
                 self::run($day, '1');
                 self::info('');
