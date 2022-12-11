@@ -11,12 +11,11 @@ class Puzzle1
     {
         $input = file_get_contents(__DIR__.'/'.$fileName)
             ?: throw new Exception('Failed to read input file.');
-        
         $monkeys = new Collection(array_map(fn (string $definition) => new Monkey($definition), explode("\n\n", $input)));
 
         (new Collection(range(1, 20)))->each(function () use ($monkeys) {
             $monkeys->each(function (Monkey $monkey) use ($monkeys) {
-                $itemsToPass = $monkey->takeTurn();
+                $itemsToPass = $monkey->takeTurn(fn (int $item) => intval(floor($item / 3)));
                 foreach ($itemsToPass as $receiver => $items) {
                     $monkeys
                         ->first(fn (Monkey $monkey) => $monkey->id() === strval($receiver))
@@ -24,7 +23,7 @@ class Puzzle1
                 }
             });
         });
-        
+
         return $monkeys
             ->map(fn (Monkey $monkey) => $monkey->inspectionCount())
             ->sortDesc()

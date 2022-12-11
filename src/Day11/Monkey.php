@@ -2,18 +2,27 @@
 
 namespace Smudger\AdventOfCode2022\Day11;
 
+use Closure;
+
 class Monkey
 {
     private string $id;
+
     /** @var int[] */
     private array $items;
+
     private string $operation;
+
     private int $divisor;
+
     private string $passingMonkey;
+
     private string $failingMonkey;
+
     private int $inspectionCount = 0;
-    
-    public function __construct(string $definition) {
+
+    public function __construct(string $definition)
+    {
         $lines = explode("\n", $definition);
         $this->id = str_replace(['Monkey ', ':'], '', $lines[0]);
         $this->items = array_map('intval', explode(', ', str_replace('  Starting items: ', '', $lines[1])));
@@ -25,7 +34,8 @@ class Monkey
 
     public function __toString(): string
     {
-        $itemsString = '['.implode(", ", $this->items).']';
+        $itemsString = '['.implode(', ', $this->items).']';
+
         return "Monkey {
             id: $this->id,
             items: $itemsString,
@@ -37,44 +47,44 @@ class Monkey
         }";
     }
 
-    public function takeTurn(): array
+    public function takeTurn(Closure $worryReducer): array
     {
         $result = [];
-        foreach ($this->items as $item)
-        {
-            $newValue = $this->inspect($item);
-            
+        foreach ($this->items as $item) {
+            $newValue = $this->inspect($item, $worryReducer);
+
             $monkeyToPassTo = $newValue % $this->divisor === 0
                 ? $this->passingMonkey
                 : $this->failingMonkey;
-            
+
             if (! array_key_exists($monkeyToPassTo, $result)) {
                 $result[$monkeyToPassTo] = [];
             }
-            
+
             $result[$monkeyToPassTo][] = $newValue;
         }
-        
+
         $this->items = [];
+
         return $result;
     }
 
-    private function inspect(int $old): int
+    private function inspect(int $old, Closure $worryReducer): int
     {
         $new = null;
         eval($this->operation);
-        $new = intval(floor($new / 3));
+        $new = $worryReducer($new);
         $this->inspectionCount++;
-        
+
         return $new;
     }
 
-    /** @param int[] $items */
+    /** @param  int[]  $items */
     public function receive(array $items): void
     {
         $this->items = array_merge($this->items, $items);
     }
-    
+
     public function id(): string
     {
         return $this->id;
@@ -83,5 +93,10 @@ class Monkey
     public function inspectionCount(): int
     {
         return $this->inspectionCount;
+    }
+
+    public function divisor(): int
+    {
+        return $this->divisor;
     }
 }
