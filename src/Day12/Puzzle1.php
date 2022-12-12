@@ -12,7 +12,7 @@ class Puzzle1
         $input = file_get_contents(__DIR__.'/'.$fileName)
             ?: throw new Exception('Failed to read input file.');
         $grid = new Grid($input);
-        $path = $grid->findPathFromStartToEnd();
+        $path = $grid->findPathFromEndToStart();
 
         return (new Collection($path))
             ->first(fn (Step $step) => $step->position->equals($grid->start))

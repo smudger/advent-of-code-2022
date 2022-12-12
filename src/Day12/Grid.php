@@ -46,7 +46,7 @@ class Grid
     }
 
     /** @return Step[] */
-    public function findPathFromStartToEnd(): array
+    public function findPathFromEndToStart(): array
     {
         $steps = [new Step($this->end, 0)];
         $i = 0;
@@ -55,6 +55,20 @@ class Grid
             [$i, $steps] = $this->move($i, $steps);
             $containsStart = count(array_filter($steps, fn (Step $step) => $step->position->equals($this->start))) > 0;
         } while (! $containsStart);
+
+        return $steps;
+    }
+
+    /** @return Step[] */
+    public function findPathFromEndToLowestElevation(): array
+    {
+        $steps = [new Step($this->end, 0)];
+        $i = 0;
+
+        do {
+            [$i, $steps] = $this->move($i, $steps);
+            $containsLowestElevation = count(array_filter($steps, fn (Step $step) => $this->heightAt($step->position) === ord('a'))) > 0;
+        } while (! $containsLowestElevation);
 
         return $steps;
     }
