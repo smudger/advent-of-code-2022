@@ -16,8 +16,6 @@ class Puzzle1
         $goal = fn (Step $step) => $step->position->equals($grid->start);
         $path = $grid->findPathFromEnd($goal);
 
-        $grid->prettyPrint($path);
-
         return (new Collection($path))
             ->first(fn (Step $step) => $step->position->equals($grid->start))
             ->count;
