@@ -12,7 +12,9 @@ class Puzzle2
         $input = file_get_contents(__DIR__.'/'.$fileName)
             ?: throw new Exception('Failed to read input file.');
         $grid = new Grid($input);
-        $path = $grid->findPathFromEndToLowestElevation();
+
+        $goal = fn (Step $step) => $grid->heightAt($step->position) === ord('a');
+        $path = $grid->findPathFromEnd($goal);
 
         return (new Collection($path))
             ->first(fn (Step $step) => $grid->heightAt($step->position) === ord('a'))

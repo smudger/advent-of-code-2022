@@ -2,6 +2,7 @@
 
 namespace Smudger\AdventOfCode2022\Day12;
 
+use Closure;
 use Illuminate\Support\Collection;
 
 class Grid
@@ -46,29 +47,14 @@ class Grid
     }
 
     /** @return Step[] */
-    public function findPathFromEndToStart(): array
+    public function findPathFromEnd(Closure $goal): array
     {
         $steps = [new Step($this->end, 0)];
         $i = 0;
 
         do {
             [$i, $steps] = $this->move($i, $steps);
-            $containsStart = count(array_filter($steps, fn (Step $step) => $step->position->equals($this->start))) > 0;
-        } while (! $containsStart);
-
-        return $steps;
-    }
-
-    /** @return Step[] */
-    public function findPathFromEndToLowestElevation(): array
-    {
-        $steps = [new Step($this->end, 0)];
-        $i = 0;
-
-        do {
-            [$i, $steps] = $this->move($i, $steps);
-            $containsLowestElevation = count(array_filter($steps, fn (Step $step) => $this->heightAt($step->position) === ord('a'))) > 0;
-        } while (! $containsLowestElevation);
+        } while (count(array_filter($steps, $goal)) === 0);
 
         return $steps;
     }
