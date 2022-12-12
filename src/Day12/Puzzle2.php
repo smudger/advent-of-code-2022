@@ -16,6 +16,8 @@ class Puzzle2
         $goal = fn (Step $step) => $grid->heightAt($step->position) === ord('a');
         $path = $grid->findPathFromEnd($goal);
 
+        $grid->prettyPrint($path);
+
         return (new Collection($path))
             ->first(fn (Step $step) => $grid->heightAt($step->position) === ord('a'))
             ->count;

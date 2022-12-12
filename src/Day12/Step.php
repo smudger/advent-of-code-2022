@@ -34,4 +34,18 @@ class Step
             ->values()
             ->all();
     }
+
+    /** @param Step[] */
+    public function stepToAdd(array $steps): Step
+    {
+        return (new Collection($steps))
+            ->filter(function (Step $step) {
+                return $this->position->equals(new Position($step->position->x + 1, $step->position->y))
+                    || $this->position->equals(new Position($step->position->x - 1, $step->position->y))
+                    || $this->position->equals(new Position($step->position->x, $step->position->y + 1))
+                    || $this->position->equals(new Position($step->position->x, $step->position->y - 1));
+            })
+            ->filter(fn (Step $step) => $step->count === $this->count - 1)
+            ->first();
+    }
 }
