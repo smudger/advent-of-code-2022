@@ -15,7 +15,7 @@ class Puzzle1
 
         return (new Collection(explode("\n\n", $input)))
             ->map(fn (string $pair) => array_map(fn (string $array) => json_decode($array, true), explode("\n", $pair)))
-            ->filter(fn (array $pair) => $comparator->compare($pair[0], $pair[1]) === 1)
+            ->filter(fn (array $pair) => $comparator->compare($pair[0], $pair[1]) === -1)
             ->map(fn (array $pair, int $index) => $index + 1)
             ->sum();
     }

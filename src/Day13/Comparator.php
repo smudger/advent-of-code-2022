@@ -7,15 +7,15 @@ class Comparator
     public function compare($left, $right): int
     {
         if (is_null($left)) {
-            return 1;
-        }
-
-        if (is_null($right)) {
             return -1;
         }
 
+        if (is_null($right)) {
+            return 1;
+        }
+
         if (is_int($left) && is_int($right)) {
-            return ($left < $right) - ($left > $right);
+            return ($left > $right) - ($left < $right);
         }
 
         if (is_int($left) && is_array($right)) {
