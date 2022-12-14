@@ -10,10 +10,10 @@ class Puzzle1
     {
         $input = file_get_contents(__DIR__.'/'.$fileName)
             ?: throw new Exception('Failed to read input file.');
-        $cave = new Cave($input);
+        $cave = new EfficientCave($input);
 
         while (true) {
-            $endPosition = $cave->moveSand(new Position(500, 0));
+            $endPosition = $cave->moveSand([500, 0]);
             if ($endPosition === false) {
                 break;
             }

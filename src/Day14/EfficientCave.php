@@ -41,6 +41,38 @@ class EfficientCave
         return $start->lineTo($end);
     }
 
+    public function moveSand(array $start): array|false
+    {
+        $down = [$start[0], $start[1] + 1];
+        if (! isset($this->cave[$down[0]][$down[1]])) {
+            if ($start[1] === $this->bedrock) {
+                return false;
+            }
+
+            return $this->moveSand($down);
+        }
+
+        $downLeft = [$start[0] - 1, $start[1] + 1];
+        if (! isset($this->cave[$downLeft[0]][$downLeft[1]])) {
+            if ($start[1] === $this->bedrock) {
+                return false;
+            }
+
+            return $this->moveSand($downLeft);
+        }
+
+        $downRight = [$start[0] + 1, $start[1] + 1];
+        if (! isset($this->cave[$downRight[0]][$downRight[1]])) {
+            if ($start[1] === $this->bedrock) {
+                return false;
+            }
+
+            return $this->moveSand($downRight);
+        }
+
+        return $start;
+    }
+
     public function moveSandWithFloor(array $start): array
     {
         if ($start[1] + 1 === $this->bedrock) {

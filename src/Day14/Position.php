@@ -25,25 +25,4 @@ class Position
 
         throw new Exception('These positions do not lie on the same horizontal or vertical line');
     }
-
-    public function equals(Position $other): bool
-    {
-        return $this->x === $other->x
-            && $this->y === $other->y;
-    }
-
-    public function down(): Position
-    {
-        return new Position($this->x, $this->y + 1);
-    }
-
-    public function downLeft(): Position
-    {
-        return new Position($this->x - 1, $this->y + 1);
-    }
-
-    public function downRight(): Position
-    {
-        return new Position($this->x + 1, $this->y + 1);
-    }
 }
