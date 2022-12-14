@@ -24,7 +24,7 @@ class Cave
         $this->bedrock = $this->rocks
             ->sort(fn (Position $a, Position $b) => ($a->y > $b->y) - ($a->y < $b->y))
             ->last()
-            ->y;
+            ->y + 2;
 
         $this->sand = new Collection([]);
     }
@@ -62,6 +62,27 @@ class Cave
             }
 
             return $this->moveSand($start->downRight());
+        }
+
+        return $start;
+    }
+
+    public function moveSandWithFloor(Position $start): Position|false
+    {
+        if ($start->y + 1 === $this->bedrock) {
+            return $start;
+        }
+
+        if (! $this->isFilled($start->down())) {
+            return $this->moveSandWithFloor($start->down());
+        }
+
+        if (! $this->isFilled($start->downLeft())) {
+            return $this->moveSandWithFloor($start->downLeft());
+        }
+
+        if (! $this->isFilled($start->downRight())) {
+            return $this->moveSandWithFloor($start->downRight());
         }
 
         return $start;

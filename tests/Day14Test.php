@@ -38,7 +38,8 @@ class Day14Test extends TestCase
     public function getPuzzle2Examples()
     {
         return [
-            ['example1.txt', 19],
+            ['example1.txt', 93],
+            ['input.txt', 29805],
         ];
     }
 }
