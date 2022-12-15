@@ -31,13 +31,13 @@ class Day15Test extends TestCase
      */
     public function it_returns_the_correct_answer_for_puzzle_2($example, $answer): void
     {
-        Assert::assertEquals($answer, (new Puzzle2())($example));
+        Assert::assertEquals($answer, (new Puzzle2())($example, 20));
     }
 
     public function getPuzzle2Examples()
     {
         return [
-            ['example1.txt', 19],
+            ['example1.txt', 56000011],
         ];
     }
 }
