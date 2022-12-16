@@ -17,54 +17,39 @@ class Puzzle2
             ->map(fn (array $line) => array_map(fn (string $coordinates) => array_map('intval', explode(',', $coordinates)), $line))
             ->map(fn (array $line) => [$line[0], $this->manhattanDistance($line[0], $line[1])])
             ->all();
-        
-        $sensedCells = [];
 
-        foreach ($sensorsWithDistance as $pair)
-        {
-            $sensor = $pair[0];
+        $points = [];
+
+        foreach ($sensorsWithDistance as $pair) {
+            $point = $pair[0];
             $distance = $pair[1];
-            $min = $sensor[0] - $distance;
-            $max = $sensor[0] + $distance;
-            echo "[$min, $max]\n";
-            for ($x = max($sensor[0] - $distance, 0); $x <= min($sensor[0] + $distance, $maxCoord); $x++)
-            {
-                if ($x % 10000 === 0)
-                {
-                    echo "X: $x\n";
+            for ($x = $point[0] - ($distance + 1); $x <= $point[0] + ($distance + 1); $x++) {
+                $distanceRemaining = ($distance + 1) - abs($x - $point[0]);
+                if ($distanceRemaining === 0) {
+                    $points[$x][$point[1]] = 1;
+
+                    continue;
                 }
-                $distanceRemaining = $distance - abs($sensor[0] - $x);
-                for ($y = max($sensor[1] - $distanceRemaining, 0); $y <= min($sensor[1] + $distanceRemaining, $maxCoord); $y++)
-                {
-                    $sensedCells[$x][$y] = 1;
-                }
+
+                $points[$x][$point[1] + $distanceRemaining] = 1;
+                $points[$x][$point[1] - $distanceRemaining] = 1;
             }
         }
 
-        $lostBeacon = (new Collection($sensedCells))
-            ->filter(fn (array $row) => sizeof($row) < $maxCoord + 1)
-            ->map(fn (array $row) => array_values(array_diff(range(0, $maxCoord), array_keys($row)))[0])
-            ->all();
+        $potentials = (new Collection($points))
+            ->map(fn (array $column) => array_keys($column))
+            ->map(fn (array $column) => array_filter($column, fn (int $y) => $y >= 0 && $y <= $maxCoord))
+            ->filter(fn (array $column, int $x) => $x >= 0 && $x <= $maxCoord)
+            ->flatMap(fn (array $column, int $x) => array_map(fn (int $y) => [$x, $y], $column));
 
-        $xCoord = array_values(array_keys($lostBeacon))[0];
-        $yCoord = $lostBeacon[$xCoord];
-        return ($xCoord * 4000000) + $yCoord;
+        $lostBeacon = $potentials
+            ->first(fn (array $position) => (new Collection($sensorsWithDistance))->every(fn (array $pair) => $this->manhattanDistance($position, $pair[0]) > $pair[1]));
+
+        return ($lostBeacon[0] * 4000000) + $lostBeacon[1];
     }
 
     private function manhattanDistance(array $position1, array $position2): int
     {
         return abs($position2[0] - $position1[0]) + abs($position2[1] - $position1[1]);
-    }
-
-    private function rangeOn(int $yLevel, array $startPosition, int $radius): array
-    {
-        $verticalDistanceToYLevel = abs($startPosition[1] - $yLevel);
-        if ($verticalDistanceToYLevel > $radius) {
-            return [];
-        }
-
-        $radiusOnYLevel = $radius - $verticalDistanceToYLevel;
-
-        return range($startPosition[0] - $radiusOnYLevel, $startPosition[0] + $radiusOnYLevel);
     }
 }
