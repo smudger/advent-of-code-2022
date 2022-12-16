@@ -31,7 +31,7 @@ class Day16Test extends TestCase
      */
     public function it_returns_the_correct_answer_for_puzzle_2($example, $answer): void
     {
-        Assert::assertEquals($answer, (new Puzzle2())($example));
+        Assert::assertEquals($answer, (new Puzzle2())($example, 3));
     }
 
     public function getPuzzle2Examples()

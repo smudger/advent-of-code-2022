@@ -7,7 +7,7 @@ use Illuminate\Support\Collection;
 
 class Puzzle2
 {
-    public function __invoke(string $fileName)
+    public function __invoke(string $fileName, int $split = 7)
     {
         $input = file_get_contents(__DIR__.'/'.$fileName)
             ?: throw new Exception('Failed to read input file.');
@@ -29,15 +29,25 @@ class Puzzle2
             )
             ->all();
 
-        $steps = [[['AA', 26], ['AA', 26], []]];
-        $i = 0;
+        $interestingValves = $valves->filter(fn (array $valve) => $valve[1] > 0)->all();
 
-        do {
-            [$i, $steps] = $this->openValves($i, $steps, $distancesWorthVisiting, $valves);
-        } while ($i < count($steps));
+        $powerSet = [[]];
 
-        return (new Collection($steps))
-            ->map(fn (array $step) => (new Collection($step[2]))->sum())
+        foreach ($interestingValves as $valve) {
+            foreach ($powerSet as $combination) {
+                $powerSet[] = array_merge([$valve[0]], $combination);
+            }
+        }
+
+        return (new Collection($powerSet))
+            ->filter(fn (array $set) => count($set) === $split)
+            ->map(fn (array $mine) => [$mine, array_diff(array_keys($interestingValves), $mine)])
+            ->map(function (array $pair) use ($distancesWorthVisiting, $valves) {
+                $valvesForMe = $pair[0];
+                $valvesForElephant = $pair[1];
+
+                return $this->checkWorkSplit($valvesForMe, $valvesForElephant, $distancesWorthVisiting, $valves);
+            })
             ->sortDesc()
             ->first();
     }
@@ -73,39 +83,53 @@ class Puzzle2
         return [$i + 1, array_merge($steps, $stepsToAdd)];
     }
 
-    private function openValves(int $i, array $steps, array $distancesWorthVisiting, Collection $valves)
+    private function openValves(int $i, array $steps, array $distancesWorthVisiting, Collection $valves, array $valvesForMe)
     {
         $step = $steps[$i];
-        $me = $step[0];
-        $elephant= $step[1];
 
-        $nextValves = (new Collection($distancesWorthVisiting[$me[0]]))
-            ->filter(fn (int $distance, string $valve) => $me[1] - ($distance + 1) > 0)
+        $nextValves = (new Collection($distancesWorthVisiting[$step[0]]))
+            ->filter(fn (int $distance, string $valve) => $step[1] - ($distance + 1) > 0)
             ->filter(fn (int $distance, string $valve) => ! isset($step[2][$valve]))
-            ->map(function (int $distance, string $valve) use ($me, $step, $valves) {
-                $timeRemaining = $me[1] - ($distance + 1);
+            ->filter(fn (int $distance, string $valve) => in_array($valve, $valvesForMe))
+            ->map(function (int $distance, string $valve) use ($step, $valves) {
+                $timeRemaining = $step[1] - ($distance + 1);
                 $openedValves = $step[2];
                 $openedValves[$valve] = $timeRemaining * $valves->get($valve)[1];
 
-                return [[$valve, $timeRemaining], [], $openedValves];
-            })
-            ->flatMap(function (array $step) use ($elephant, $distancesWorthVisiting, $valves) {
-                return (new Collection($distancesWorthVisiting[$elephant[0]]))
-                    ->filter(fn (int $distance, string $valve) => $elephant[1] - ($distance + 1) > 0)
-                    ->filter(fn (int $distance, string $valve) => ! isset($step[2][$valve]))
-                    ->map(function (int $distance, string $valve) use ($elephant, $step, $valves) {
-                        $timeRemaining = $elephant[1] - ($distance + 1);
-                        $openedValves = $step[2];
-                        $openedValves[$valve] = $timeRemaining * $valves->get($valve)[1];
-
-                        return [$step[0], [$valve, $timeRemaining], $openedValves];
-                    })
-                    ->values()
-                    ->all();
+                return [$valve, $timeRemaining, $openedValves];
             })
             ->values()
             ->all();
 
         return [$i + 1, array_merge($steps, $nextValves)];
+    }
+
+    private function checkWorkSplit(array $valvesForMe, array $valvesForElephant, array $distancesWorthVisiting, Collection $valves): int
+    {
+        $mySteps = [['AA', 26, []]];
+        $i = 0;
+
+        do {
+            [$i, $mySteps] = $this->openValves($i, $mySteps, $distancesWorthVisiting, $valves, $valvesForMe);
+        } while ($i < count($mySteps));
+
+        $myBestReleasedPressure = (new Collection($mySteps))
+            ->map(fn (array $step) => (new Collection($step[2]))->sum())
+            ->sortDesc()
+            ->first();
+
+        $elephantSteps = [['AA', 26, []]];
+        $i = 0;
+
+        do {
+            [$i, $elephantSteps] = $this->openValves($i, $elephantSteps, $distancesWorthVisiting, $valves, $valvesForElephant);
+        } while ($i < count($elephantSteps));
+
+        $elephantBestReleasedPressure = (new Collection($elephantSteps))
+            ->map(fn (array $step) => (new Collection($step[2]))->sum())
+            ->sortDesc()
+            ->first();
+
+        return $myBestReleasedPressure + $elephantBestReleasedPressure;
     }
 }
