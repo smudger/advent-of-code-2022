@@ -20,8 +20,13 @@ class Moves
         $this->currentIndex++;
 
         return match ($this->moves[$index]) {
-            '>' => Move::Right,
-            '<' => Move::Left,
+            '>' => [Move::Right, $index],
+            '<' => [Move::Left, $index],
         };
+    }
+
+    public function backOne(): void
+    {
+        $this->currentIndex--;
     }
 }

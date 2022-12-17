@@ -24,26 +24,13 @@ class Puzzle1
 
             do {
                 $didMove = $rock
-                    ->move($moves->next(), $cave)
+                    ->move($moves->next()[0], $cave)
                     ->drop($cave);
             } while ($didMove);
 
             foreach ($rock->positions() as $position) {
                 $cave[$position[0]][$position[1]] = '#';
             }
-//            krsort($cave);
-//            echo "=================\n";
-//            foreach ($cave as $row) {
-//                foreach (range(0, 8) as $x) {
-//                    if ($x === 0 || $x === 8) {
-//                        echo '|';
-//                        continue;
-//                    }
-//                    echo isset($row[$x]) ? '#' : '.';
-//                }
-//                echo "\n";
-//            }
-//            echo "=================\n";
         }
 
         krsort($cave);
