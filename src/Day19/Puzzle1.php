@@ -24,7 +24,7 @@ class Puzzle1
                     new Recipe(Robot::Ore, [new MaterialCost(Material::Ore, $blueprint[1])]),
                     new Recipe(Robot::Clay, [new MaterialCost(Material::Ore, $blueprint[2])]),
                     new Recipe(Robot::Obsidian, [new MaterialCost(Material::Ore, $blueprint[3]), new MaterialCost(Material::Clay, $blueprint[4])]),
-                    new Recipe(Robot::Geode, [new MaterialCost(Material::Ore, $blueprint[5]), new MaterialCost(Material::Obsidian, $blueprint[5])]),
+                    new Recipe(Robot::Geode, [new MaterialCost(Material::Ore, $blueprint[5]), new MaterialCost(Material::Obsidian, $blueprint[6])]),
                 ],
             ))
             ->map(fn (Blueprint $blueprint) => $blueprint->determineQualityLevel(minutes: 24))

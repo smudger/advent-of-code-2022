@@ -40,39 +40,46 @@ class Blueprint
             'minute' => 0,
             'maxedOutRobots' => [],
         ]];
+        $geodesHaveBeenProduced = false;
 
-        while ($workspaces[0]['minute'] < $minutes) {
+        while (isset($workspaces[0]['minute']) && $workspaces[0]['minute'] < $minutes) {
             $minute = $workspaces[0]['minute'];
             $workspaceCount = count($workspaces);
             var_dump("Blueprint: $this->id, Minute: $minute, Workspaces To Consider: $workspaceCount");
-            $workspaces = array_values($this->iterateWorkspaces(
+            [$workspaces, $geodesHaveBeenProduced] = array_values($this->iterateWorkspaces(
                 $workspaces,
                 $minutes,
-                oreOverProductionTolerance: 100,
-                clayOverProductionTolerance: 20,
-                obsidianOverProductionTolerance: 15,
+                $geodesHaveBeenProduced,
+                oreOverProductionTolerance: 200,
+                clayOverProductionTolerance: 50,
+                obsidianOverProductionTolerance: 30,
             ));
         }
 
-        $temp = (new Collection($workspaces))
+        if (count($workspaces) === 0) {
+            return 0;
+        }
+
+        return (new Collection($workspaces))
             ->map(fn (array $workspace) => $workspace['materials'][Material::Geode->name])
             ->sortDesc()
-            ->first();
-        var_dump($temp);
-
-        return $temp;
+            ->first() * $this->id;
     }
 
     private function iterateWorkspaces(
         array $workspaces,
         int $totalMinutes,
+        bool $geodesHaveBeenProduced,
         float $oreOverProductionTolerance,
         float $clayOverProductionTolerance,
         float $obsidianOverProductionTolerance,
     ): array {
         $workspacesAfterIteration = [];
         foreach ($workspaces as $workspace) {
-            if ($workspace['minute'] >= 20 && $workspace['materials'][Material::Geode->name] === 0) {
+            if ($workspace['materials'][Material::Geode->name] > 0) {
+                $geodesHaveBeenProduced = true;
+            }
+            if ($geodesHaveBeenProduced && $workspace['minute'] >= 20 && $workspace['materials'][Material::Geode->name] === 0) {
                 continue;
             }
             $maxOreUsed = $this->maxOreRequired * ($totalMinutes - $workspace['minute']);
@@ -87,7 +94,7 @@ class Blueprint
             if (floatval($workspace['materials'][Material::Obsidian->name]) > $maxObsidianUsed * $obsidianOverProductionTolerance) {
                 continue;
             }
-            if ($workspace['minute'] > 10 && array_sum($workspace['robots']) < (0.4 * $workspace['minute'])) {
+            if ($workspace['minute'] > 10 && array_sum($workspace['robots']) < (0.2 * $workspace['minute'])) {
                 continue;
             }
 
@@ -102,8 +109,6 @@ class Blueprint
                 'minute' => $workspace['minute'] + 1,
                 'maxedOutRobots' => $workspace['maxedOutRobots'],
             ];
-
-            var_dump($noProductionWorkspace['materials']);
 
             $satisifedRecipes = $this->getSatisfiedRecipesForWorkspace($workspace);
 
@@ -154,9 +159,7 @@ class Blueprint
             }
         }
 
-        return $workspacesAfterIteration[0]['minute'] > 12
-            ? array_filter($workspacesAfterIteration, fn (int $key) => $key % 7 < 3, ARRAY_FILTER_USE_KEY)
-            : $workspacesAfterIteration;
+        return [$workspacesAfterIteration, $geodesHaveBeenProduced];
     }
 
     /** @return Recipe[] */
