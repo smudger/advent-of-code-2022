@@ -2,8 +2,6 @@
 
 namespace Smudger\AdventOfCode2022\Day19;
 
-use Illuminate\Support\Collection;
-
 class Blueprint
 {
     private int $obsidianForGeode;
@@ -32,140 +30,146 @@ class Blueprint
                 Robot::Geode->name => 0,
             ],
             'materials' => [
-                Material::Ore->name => 0,
+                Material::Ore->name => 1,
                 Material::Clay->name => 0,
                 Material::Obsidian->name => 0,
                 Material::Geode->name => 0,
             ],
-            'minute' => 0,
-            'maxedOutRobots' => [],
+            'minute' => 1,
         ]];
-        $mostGeodesSeen = 0;
+        $index = 0;
+        $maxGeodes = 0;
 
-        while (isset($workspaces[0]['minute']) && $workspaces[0]['minute'] < $minutes) {
-            $minute = $workspaces[0]['minute'];
-            $workspaceCount = count($workspaces);
-            var_dump("Blueprint: $this->id, Minute: $minute, Workspaces To Consider: $workspaceCount, Most Geodes Seen: $mostGeodesSeen");
-            [$workspaces, $mostGeodesSeen] = array_values($this->iterateWorkspaces(
+        do {
+            if($index % 5000 === 0)
+            {
+                $workspacesToConsider = count($workspaces);
+                $percentage = round($index / $workspacesToConsider * 100, 1);
+                var_dump("Blueprint: $this->id, Most Geodes: $maxGeodes, Workspaces: $index/$workspacesToConsider ($percentage%)");
+            }
+            [$workspaces, $index, $maxGeodes] = $this->iterateWorkspaces(
                 $workspaces,
+                $index,
                 $minutes,
-                $mostGeodesSeen,
-            ));
-        }
+                $maxGeodes,
+            );
+        } while ($index < count($workspaces));
 
-        if (count($workspaces) === 0) {
-            return 0;
-        }
-
-        return (new Collection($workspaces))
-            ->map(fn (array $workspace) => $workspace['materials'][Material::Geode->name])
-            ->sortDesc()
-            ->first() * $this->id;
+        return sizeof($workspaces) === 0 ? 0 : $maxGeodes * $this->id;
     }
 
     private function iterateWorkspaces(
         array $workspaces,
+        int $index,
         int $totalMinutes,
-        int $mostGeodesSeen,
+        int $maxGeodes,
     ): array {
-        $workspacesAfterIteration = [];
-        $timeRemaining = $totalMinutes - $workspaces[0]['minute'];
-        foreach ($workspaces as $workspace) {
-            $geodesIHaveProduced = $workspace['materials'][Material::Geode->name];
-            $myGeodeRobots = $workspace['robots'][Robot::Geode->name];
-            $geodesICouldProduce = array_sum(range($myGeodeRobots, ($myGeodeRobots + $timeRemaining) - 1));
-            $maxGeodesICouldProduce = $geodesIHaveProduced + $geodesICouldProduce;
-            $maxGeodesCouldBeProduced = $mostGeodesSeen + $timeRemaining;
-            if ($maxGeodesICouldProduce < $maxGeodesCouldBeProduced) {
-                var_dump("Too Few Geodes: (Could Make: $maxGeodesICouldProduce, Needed: $maxGeodesCouldBeProduced)");
+        $workspace = $workspaces[$index];
+        
+        [$newWorkspaces, $maxGeodes] = $this->getNewWorkspacesForWorkspace($workspace, $totalMinutes, $maxGeodes);
 
-                continue;
-            }
-
-            $noProductionWorkspace = [
-                'robots' => $workspace['robots'],
-                'materials' => [
-                    Material::Ore->name => $workspace['materials'][Material::Ore->name] + $workspace['robots'][Robot::Ore->name],
-                    Material::Clay->name => $workspace['materials'][Material::Clay->name] + $workspace['robots'][Robot::Clay->name],
-                    Material::Obsidian->name => $workspace['materials'][Material::Obsidian->name] + $workspace['robots'][Robot::Obsidian->name],
-                    Material::Geode->name => $workspace['materials'][Material::Geode->name] + $workspace['robots'][Robot::Geode->name],
-                ],
-                'minute' => $workspace['minute'] + 1,
-                'maxedOutRobots' => $workspace['maxedOutRobots'],
-            ];
-
-            if ($noProductionWorkspace['materials'][Material::Geode->name] > $mostGeodesSeen) {
-                $mostGeodesSeen = $workspace['materials'][Material::Geode->name];
-            }
-
-            $satisifedRecipes = $this->getSatisfiedRecipesForWorkspace($workspace);
-
-            foreach ($satisifedRecipes as $satisifedRecipe) {
-                if (in_array($satisifedRecipe->robot->name, $noProductionWorkspace['maxedOutRobots'])) {
-                    continue;
-                }
-                if ($satisifedRecipe->robot === Robot::Obsidian) {
-                    if (($workspace['robots'][Robot::Obsidian->name] * $timeRemaining) + $workspace['materials'][Material::Obsidian->name] >= $this->obsidianForGeode * $timeRemaining) {
-                        $noProductionWorkspace['maxedOutRobots'][] = Robot::Obsidian->name;
-
-                        continue;
-                    }
-                }
-                if ($satisifedRecipe->robot === Robot::Clay) {
-                    if (($workspace['robots'][Robot::Clay->name] * $timeRemaining) + $workspace['materials'][Material::Clay->name] >= $this->clayForObsidian * $timeRemaining) {
-                        $noProductionWorkspace['maxedOutRobots'][] = Robot::Clay->name;
-
-                        continue;
-                    }
-                }
-                if ($satisifedRecipe->robot === Robot::Ore) {
-                    if (($workspace['robots'][Robot::Ore->name] * $timeRemaining) + $workspace['materials'][Material::Ore->name] >= $this->maxOreRequired * $timeRemaining) {
-                        $noProductionWorkspace['maxedOutRobots'][] = Robot::Ore->name;
-
-                        continue;
-                    }
-                }
-
-                $materialCosts = (new Collection($satisifedRecipe->materials))->mapWithKeys(fn (MaterialCost $materialCost) => [$materialCost->material->name => $materialCost->number])->all();
-                $workspacesAfterIteration[] = [
-                    'robots' => [
-                        Robot::Ore->name => $satisifedRecipe->robot === Robot::Ore ? $workspace['robots'][Robot::Ore->name] + 1 : $workspace['robots'][Robot::Ore->name],
-                        Robot::Clay->name => $satisifedRecipe->robot === Robot::Clay ? $workspace['robots'][Robot::Clay->name] + 1 : $workspace['robots'][Robot::Clay->name],
-                        Robot::Obsidian->name => $satisifedRecipe->robot === Robot::Obsidian ? $workspace['robots'][Robot::Obsidian->name] + 1 : $workspace['robots'][Robot::Obsidian->name],
-                        Robot::Geode->name => $satisifedRecipe->robot === Robot::Geode ? $workspace['robots'][Robot::Geode->name] + 1 : $workspace['robots'][Robot::Geode->name],
-                    ],
-                    'materials' => [
-                        Material::Ore->name => $noProductionWorkspace['materials'][Material::Ore->name] - ($materialCosts[Material::Ore->name] ?? 0),
-                        Material::Clay->name => $noProductionWorkspace['materials'][Material::Clay->name] - ($materialCosts[Material::Clay->name] ?? 0),
-                        Material::Obsidian->name => $noProductionWorkspace['materials'][Material::Obsidian->name] - ($materialCosts[Material::Obsidian->name] ?? 0),
-                        Material::Geode->name => $noProductionWorkspace['materials'][Material::Geode->name],
-                    ],
-                    'minute' => $workspace['minute'] + 1,
-                    'maxedOutRobots' => $noProductionWorkspace['maxedOutRobots'],
-                ];
-            }
-
-            $couldMakeAGeodeRobot = count(array_filter($satisifedRecipes, fn (Recipe $recipe) => $recipe->robot === Robot::Geode)) > 0;
-            if (count($satisifedRecipes) < 4) {
-                if (! ($couldMakeAGeodeRobot && count($noProductionWorkspace['maxedOutRobots']) === 3)) {
-                    $workspacesAfterIteration[] = $noProductionWorkspace;
-                }
-            }
-        }
-
-        return [$workspacesAfterIteration, $mostGeodesSeen];
+        return [array_merge($workspaces, $newWorkspaces), $index + 1, $maxGeodes];
     }
 
-    /** @return Recipe[] */
-    private function getSatisfiedRecipesForWorkspace(array $workspace): array
+    private function getNewWorkspacesForWorkspace(array $workspace, int $totalMinutes, int $maxGeodes): array
     {
-        $availableMaterials = $workspace['materials'];
+        $timeRemaining = $totalMinutes - $workspace['minute'];
+        $newWorkspaces = [];
+        
+        if (($workspace['robots'][Robot::Obsidian->name] * $timeRemaining) + $workspace['materials'][Material::Obsidian->name] < $this->obsidianForGeode * $timeRemaining) {
+            // we want an obsidian robot
+            $obsidianResult = $this->buildRobot(Robot::Obsidian, $workspace, $timeRemaining, $maxGeodes);
+            if ($obsidianResult !== false)
+            {
+                $newWorkspaces[] = $obsidianResult;
+            }
+        }
+        if (($workspace['robots'][Robot::Clay->name] * $timeRemaining) + $workspace['materials'][Material::Clay->name] < $this->clayForObsidian * $timeRemaining) {
+            // we want a clay robot
+            $clayResult = $this->buildRobot(Robot::Clay, $workspace, $timeRemaining, $maxGeodes);
+            if ($clayResult !== false)
+            {
+                $newWorkspaces[] = $clayResult;
+            }
+        }
+        if (($workspace['robots'][Robot::Ore->name] * $timeRemaining) + $workspace['materials'][Material::Ore->name] < $this->maxOreRequired * $timeRemaining) {
+            // we want an ore robot
+            $oreResult = $this->buildRobot(Robot::Ore, $workspace, $timeRemaining, $maxGeodes);
+            if ($oreResult !== false)
+            {
+                $newWorkspaces[] = $oreResult;
+            }
+        }
+        $geodeResult = $this->buildRobot(Robot::Geode, $workspace, $timeRemaining, $maxGeodes);
+        if ($geodeResult !== false)
+        {
+            $newWorkspaces[] = $geodeResult;
+            if($geodeResult['materials'][Material::Geode->name] > $maxGeodes)
+            {
+                $maxGeodes = $geodeResult['materials'][Material::Geode->name];
+            }
+        }
+        
+        return [$newWorkspaces, $maxGeodes];
+    }
 
-        return array_filter($this->recipes, function (Recipe $recipe) use ($availableMaterials) {
-            $materialCosts = $recipe->materials;
-            $unsatisfiedCosts = array_filter($materialCosts, fn (MaterialCost $cost) => $cost->number > $availableMaterials[$cost->material->name]);
+    private function buildRobot(Robot $robot, array $workspace, int $timeRemaining, int $maxGeodes): array|bool
+    {
+        $recipe = array_values(array_filter($this->recipes, fn (Recipe $recipe) => $recipe->robot === $robot))[0];
 
-            return count($unsatisfiedCosts) === 0;
-        });
+        $materialCosts = array_combine(
+            array_map(fn (MaterialCost $materialCost) => $materialCost->material->name, $recipe->materials),
+            array_map(fn (MaterialCost $materialCost) => $materialCost->number, $recipe->materials),
+        );
+        
+        $minutesToGatherResources = array_map(function (MaterialCost $materialCost) use ($workspace) {
+            $currentReserve = $workspace['materials'][$materialCost->material->name];
+            $generationPerMinute = $workspace['robots'][$materialCost->material->name];
+            
+            if ($generationPerMinute === 0)
+            {
+                return false;
+            }
+            
+            return intval(ceil(($materialCost->number - $currentReserve) / $generationPerMinute));
+        }, $recipe->materials);
+        
+        if (in_array(false, $minutesToGatherResources, true))
+        {
+            return false;
+        }
+        
+        $minutesToGatherAndProduce = max($minutesToGatherResources) + 1;
+        
+        $newWorkspace = [
+            'robots' => [
+                Robot::Ore->name => $workspace['robots'][Robot::Ore->name] + ($robot === Robot::Ore),
+                Robot::Clay->name => $workspace['robots'][Robot::Clay->name] + ($robot === Robot::Clay),
+                Robot::Obsidian->name => $workspace['robots'][Robot::Obsidian->name] + ($robot === Robot::Obsidian),
+                Robot::Geode->name => $workspace['robots'][Robot::Geode->name] + ($robot === Robot::Geode),
+            ],
+            'materials' => [
+                Material::Ore->name => $workspace['materials'][Material::Ore->name] + ($minutesToGatherAndProduce * $workspace['robots'][Robot::Ore->name]) - ($materialCosts[Material::Ore->name] ?? 0),
+                Material::Clay->name => $workspace['materials'][Material::Clay->name] + ($minutesToGatherAndProduce * $workspace['robots'][Robot::Clay->name]) - ($materialCosts[Material::Clay->name] ?? 0),
+                Material::Obsidian->name => $workspace['materials'][Material::Obsidian->name] + ($minutesToGatherAndProduce * $workspace['robots'][Robot::Obsidian->name]) - ($materialCosts[Material::Obsidian->name] ?? 0),
+                Material::Geode->name => $workspace['materials'][Material::Geode->name] + ($robot === Robot::Geode ? $timeRemaining - $minutesToGatherAndProduce : 0),
+            ],
+            'minute' => $workspace['minute'] + $minutesToGatherAndProduce,
+        ];
+        
+        if ($minutesToGatherAndProduce >= $timeRemaining)
+        {
+            return false;
+        }
+            
+        $maxGeodesICanProduce = $newWorkspace['materials'][Material::Geode->name]
+            + array_sum(range(0, $timeRemaining - $minutesToGatherAndProduce));
+    
+        if ($maxGeodesICanProduce < $maxGeodes)
+        {
+            return false;
+        }
+        
+        return $newWorkspace;
     }
 }
