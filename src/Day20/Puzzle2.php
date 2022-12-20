@@ -10,6 +10,33 @@ class Puzzle2
     {
         $input = file_get_contents(__DIR__.'/'.$fileName)
             ?: throw new Exception('Failed to read input file.');
-        // TODO: Solve puzzle 2.
+        $decryptionKey = 811589153;
+
+        $original = array_map('intval', explode("\n", $input));
+        $original = array_map(fn (int $entry) => $entry * $decryptionKey, $original);
+        $size = count($original);
+
+        $decrypted = array_map(fn (int $value, int $key) => [$key, $value], $original, array_keys($original));
+
+        for ($i = 0; $i < 10; $i++) {
+            foreach ($original as $key => $value) {
+                $decrypted = $this->jump($decrypted, $size, $key, $value);
+            }
+        }
+
+        $decryptedValues = array_map(fn (array $entry) => $entry[1], $decrypted);
+        $indexOfZero = array_search(0, $decryptedValues);
+
+        return array_sum(array_map(fn (int $index) => $decryptedValues[($indexOfZero + $index) % count($decryptedValues)], [1000, 2000, 3000]));
+    }
+
+    private function jump(array $decrypted, int $size, int $key, int $value): array
+    {
+        $currentIndex = array_search([$key, $value], $decrypted);
+        $newIndex = ($value + $currentIndex) % ($size - 1);
+        $decrypted = array_values(array_filter($decrypted, fn (array $entry) => $entry[0] !== $key));
+        array_splice($decrypted, $newIndex, 0, [[$key, $value]]);
+
+        return array_values($decrypted);
     }
 }
