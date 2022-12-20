@@ -40,19 +40,16 @@ class Blueprint
             'minute' => 0,
             'maxedOutRobots' => [],
         ]];
-        $geodesHaveBeenProduced = false;
+        $mostGeodesSeen = 0;
 
         while (isset($workspaces[0]['minute']) && $workspaces[0]['minute'] < $minutes) {
             $minute = $workspaces[0]['minute'];
             $workspaceCount = count($workspaces);
-            var_dump("Blueprint: $this->id, Minute: $minute, Workspaces To Consider: $workspaceCount");
-            [$workspaces, $geodesHaveBeenProduced] = array_values($this->iterateWorkspaces(
+            var_dump("Blueprint: $this->id, Minute: $minute, Workspaces To Consider: $workspaceCount, Most Geodes Seen: $mostGeodesSeen");
+            [$workspaces, $mostGeodesSeen] = array_values($this->iterateWorkspaces(
                 $workspaces,
                 $minutes,
-                $geodesHaveBeenProduced,
-                oreOverProductionTolerance: 200,
-                clayOverProductionTolerance: 50,
-                obsidianOverProductionTolerance: 30,
+                $mostGeodesSeen,
             ));
         }
 
@@ -69,32 +66,19 @@ class Blueprint
     private function iterateWorkspaces(
         array $workspaces,
         int $totalMinutes,
-        bool $geodesHaveBeenProduced,
-        float $oreOverProductionTolerance,
-        float $clayOverProductionTolerance,
-        float $obsidianOverProductionTolerance,
+        int $mostGeodesSeen,
     ): array {
         $workspacesAfterIteration = [];
+        $timeRemaining = $totalMinutes - $workspaces[0]['minute'];
         foreach ($workspaces as $workspace) {
-            if ($workspace['materials'][Material::Geode->name] > 0) {
-                $geodesHaveBeenProduced = true;
-            }
-            if ($geodesHaveBeenProduced && $workspace['minute'] >= 20 && $workspace['materials'][Material::Geode->name] === 0) {
-                continue;
-            }
-            $maxOreUsed = $this->maxOreRequired * ($totalMinutes - $workspace['minute']);
-            if (floatval($workspace['materials'][Material::Ore->name]) > $maxOreUsed * $oreOverProductionTolerance) {
-                continue;
-            }
-            $maxClayUsed = $this->clayForObsidian * ($totalMinutes - $workspace['minute']);
-            if (floatval($workspace['materials'][Material::Clay->name]) > $maxClayUsed * $clayOverProductionTolerance) {
-                continue;
-            }
-            $maxObsidianUsed = $this->obsidianForGeode * ($totalMinutes - $workspace['minute']);
-            if (floatval($workspace['materials'][Material::Obsidian->name]) > $maxObsidianUsed * $obsidianOverProductionTolerance) {
-                continue;
-            }
-            if ($workspace['minute'] > 10 && array_sum($workspace['robots']) < (0.2 * $workspace['minute'])) {
+            $geodesIHaveProduced = $workspace['materials'][Material::Geode->name];
+            $myGeodeRobots = $workspace['robots'][Robot::Geode->name];
+            $geodesICouldProduce = array_sum(range($myGeodeRobots, ($myGeodeRobots + $timeRemaining) - 1));
+            $maxGeodesICouldProduce = $geodesIHaveProduced + $geodesICouldProduce;
+            $maxGeodesCouldBeProduced = $mostGeodesSeen + $timeRemaining;
+            if ($maxGeodesICouldProduce < $maxGeodesCouldBeProduced) {
+                var_dump("Too Few Geodes: (Could Make: $maxGeodesICouldProduce, Needed: $maxGeodesCouldBeProduced)");
+
                 continue;
             }
 
@@ -110,6 +94,10 @@ class Blueprint
                 'maxedOutRobots' => $workspace['maxedOutRobots'],
             ];
 
+            if ($noProductionWorkspace['materials'][Material::Geode->name] > $mostGeodesSeen) {
+                $mostGeodesSeen = $workspace['materials'][Material::Geode->name];
+            }
+
             $satisifedRecipes = $this->getSatisfiedRecipesForWorkspace($workspace);
 
             foreach ($satisifedRecipes as $satisifedRecipe) {
@@ -117,18 +105,24 @@ class Blueprint
                     continue;
                 }
                 if ($satisifedRecipe->robot === Robot::Obsidian) {
-                    if (($workspace['robots'][Robot::Obsidian->name] === $this->obsidianForGeode - 1)) {
+                    if (($workspace['robots'][Robot::Obsidian->name] * $timeRemaining) + $workspace['materials'][Material::Obsidian->name] >= $this->obsidianForGeode * $timeRemaining) {
                         $noProductionWorkspace['maxedOutRobots'][] = Robot::Obsidian->name;
+
+                        continue;
                     }
                 }
                 if ($satisifedRecipe->robot === Robot::Clay) {
-                    if (($workspace['robots'][Robot::Clay->name] === $this->clayForObsidian - 1)) {
+                    if (($workspace['robots'][Robot::Clay->name] * $timeRemaining) + $workspace['materials'][Material::Clay->name] >= $this->clayForObsidian * $timeRemaining) {
                         $noProductionWorkspace['maxedOutRobots'][] = Robot::Clay->name;
+
+                        continue;
                     }
                 }
                 if ($satisifedRecipe->robot === Robot::Ore) {
-                    if (($workspace['robots'][Robot::Ore->name] === $this->maxOreRequired - 1)) {
+                    if (($workspace['robots'][Robot::Ore->name] * $timeRemaining) + $workspace['materials'][Material::Ore->name] >= $this->maxOreRequired * $timeRemaining) {
                         $noProductionWorkspace['maxedOutRobots'][] = Robot::Ore->name;
+
+                        continue;
                     }
                 }
 
@@ -159,7 +153,7 @@ class Blueprint
             }
         }
 
-        return [$workspacesAfterIteration, $geodesHaveBeenProduced];
+        return [$workspacesAfterIteration, $mostGeodesSeen];
     }
 
     /** @return Recipe[] */

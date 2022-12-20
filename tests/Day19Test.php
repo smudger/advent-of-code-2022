@@ -15,6 +15,7 @@ class Day19Test extends TestCase
      */
     public function it_returns_the_correct_answer_for_puzzle_1($example, $answer): void
     {
+        $this->markTestSkipped('Day 19');
         Assert::assertEquals($answer, (new Puzzle1())($example));
     }
 
