@@ -22,6 +22,7 @@ class Day19Test extends TestCase
     {
         return [
             ['example1.txt', 33],
+            ['input.txt', 1624],
         ];
     }
 
