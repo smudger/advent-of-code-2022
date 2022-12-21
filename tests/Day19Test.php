@@ -32,14 +32,15 @@ class Day19Test extends TestCase
      */
     public function it_returns_the_correct_answer_for_puzzle_2($example, $answer): void
     {
-        $this->markTestSkipped('Day 19');
+        $this->markTestSkipped('Day 19 Puzzle 2');
         Assert::assertEquals($answer, (new Puzzle2())($example));
     }
 
     public function getPuzzle2Examples()
     {
         return [
-            ['example1.txt', 19],
+            ['example1.txt', 3472],
+            ['input.txt', 12628],
         ];
     }
 }

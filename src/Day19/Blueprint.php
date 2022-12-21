@@ -52,6 +52,43 @@ class Blueprint
         return count($workspaces) === 0 ? 0 : $maxGeodes * $this->id;
     }
 
+    public function determineMaxGeodes(int $minutes): int
+    {
+        $workspaces = [[
+            'robots' => [
+                Robot::Ore->name => 1,
+                Robot::Clay->name => 0,
+                Robot::Obsidian->name => 0,
+                Robot::Geode->name => 0,
+            ],
+            'materials' => [
+                Material::Ore->name => 1,
+                Material::Clay->name => 0,
+                Material::Obsidian->name => 0,
+                Material::Geode->name => 0,
+            ],
+            'minute' => 1,
+        ]];
+        $index = 0;
+        $maxGeodes = 0;
+
+        do {
+            if ($index % 5000 === 0) {
+                $workspacesToConsider = count($workspaces);
+                $percentage = round($index / $workspacesToConsider * 100, 1);
+                var_dump("Blueprint: $this->id, Most Geodes: $maxGeodes, Workspaces: $index/$workspacesToConsider ($percentage%)");
+            }
+            [$workspaces, $index, $maxGeodes] = $this->iterateWorkspaces(
+                $workspaces,
+                $index,
+                $minutes,
+                $maxGeodes,
+            );
+        } while ($index < count($workspaces));
+
+        return count($workspaces) === 0 ? 0 : $maxGeodes;
+    }
+
     private function iterateWorkspaces(
         array $workspaces,
         int $index,
