@@ -10,6 +10,24 @@ class Puzzle2
     {
         $input = file_get_contents(__DIR__.'/'.$fileName)
             ?: throw new Exception('Failed to read input file.');
-        // TODO: Solve puzzle 2.
+        [$grid, $rawInstructions] = explode("\n\n", $input);
+        $x = strpos(explode("\n", $grid)[0], '.') + 1;
+
+        $instructions = array_map(
+            fn (string $instruction) => is_numeric($instruction) ? intval($instruction) : $instruction,
+            preg_split("/\s+/", preg_replace('/([A-Z])/', ' $1 ', $rawInstructions))
+        );
+
+        $cube = new Cube($grid, new Glue($fileName));
+
+        $position = [1, $x, 0];
+
+        foreach ($instructions as $instruction) {
+            $position = $cube->followInstruction($position, $instruction);
+        }
+
+        return (1000 * $position[0])
+            + (4 * $position[1])
+            + $position[2];
     }
 }
