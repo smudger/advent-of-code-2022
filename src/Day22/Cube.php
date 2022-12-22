@@ -100,14 +100,16 @@ class Cube
 
     public function hopToIfAble(array $newPosition, array $oldPosition): array
     {
-        if ($this->grid[$newPosition[0]][$newPosition[1]] === '.') {
-            return $newPosition;
-        }
+        try {
+            if ($this->grid[$newPosition[0]][$newPosition[1]] === '.') {
+                return $newPosition;
+            }
 
-        if ($this->grid[$newPosition[0]][$newPosition[1]] === '#') {
-            return $oldPosition;
+            if ($this->grid[$newPosition[0]][$newPosition[1]] === '#') {
+                return $oldPosition;
+            }
+        } catch (\Exception) {
+            throw new \Exception('TRIED TO MOVE OFF MAP: '.'NEW: ['.implode(', ', $newPosition).']'.' OLD: ['.implode(', ', $oldPosition).']');
         }
-
-        throw new \Exception('TRIED TO MOVE OFF MAP!');
     }
 }
