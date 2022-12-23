@@ -23,6 +23,7 @@ class Day23Test extends TestCase
         return [
             ['example1.txt', 25],
             ['example2.txt', 110],
+            ['input.txt', 4249],
         ];
     }
 
@@ -38,7 +39,8 @@ class Day23Test extends TestCase
     public function getPuzzle2Examples()
     {
         return [
-            ['example1.txt', 19],
+            ['example1.txt', 4],
+            ['example2.txt', 20],
         ];
     }
 }
